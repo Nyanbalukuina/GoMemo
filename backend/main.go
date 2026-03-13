@@ -28,18 +28,33 @@ func main() {
 
 	// --- テーブルの自動生成（存在しない場合のみ） ---
 	createTablesSQL := `
+	-- ユーザーテーブル
 	CREATE TABLE IF NOT EXISTS users (
 		id SERIAL PRIMARY KEY,
 		username TEXT UNIQUE NOT NULL,
 		password_hash TEXT NOT NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);
+
+	-- フォルダテーブル
+	CREATE TABLE IF NOT EXISTS folders (
+		id SERIAL PRIMARY KEY,
+		user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+		name TEXT NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	);
+
+	-- メモテーブル
 	CREATE TABLE IF NOT EXISTS memos (
 		id SERIAL PRIMARY KEY,
 		user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+		folder_id INTEGER REFERENCES folders(id) ON DELETE SET NULL,
+		title TEXT NOT NULL DEFAULT '',
 		content TEXT NOT NULL,
+		is_pinned BOOLEAN DEFAULT FALSE,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`
+
 	if _, err = db.Exec(createTablesSQL); err != nil {
 		log.Fatalf("テーブル作成失敗: %v", err)
 	}

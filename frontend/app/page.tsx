@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function LoginPage() {
-  const [username, setUsername] = useState(""); // email用に使うならemailにリネームしてもOK
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
 
@@ -28,8 +29,20 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#FDFCF0] flex items-center justify-center p-4 text-[#451A03]">
       <div className="max-w-md w-full bg-white/50 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-orange-100">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold tracking-tight mb-2 text-[#D97706]">GoMemo</h1>
+
+        {/* ロゴとタイトルのエリア */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="flex items-center gap-3">
+            <Image 
+              src="/logo.png" 
+              alt="GoMemo Logo" 
+              width={48} 
+              height={48} 
+              className="rounded-xl shadow-sm"
+            />
+            <h1 className="text-3xl font-bold tracking-tight text-[#D97706]">GoMemo</h1>
+          </div>
+          {/* <p className="mt-3 text-orange-800/70 text-sm">いつでも、どこでも、こころを書き留める</p> */}
         </div>
 
         {/* 1. onSubmit を追加 */}
@@ -39,7 +52,7 @@ export default function LoginPage() {
             <input 
               type="email" 
               required
-              value={username} // 2. stateと紐付け
+              value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full px-4 py-3 rounded-2xl border-none bg-orange-50/50 focus:ring-2 focus:ring-orange-200 outline-none transition-all"
               placeholder="example@mail.com"
@@ -50,7 +63,7 @@ export default function LoginPage() {
             <input 
               type="password" 
               required
-              value={password} // 3. stateと紐付け
+              value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 rounded-2xl border-none bg-orange-50/50 focus:ring-2 focus:ring-orange-200 outline-none transition-all"
               placeholder="••••••••"
