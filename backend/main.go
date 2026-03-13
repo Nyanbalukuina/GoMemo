@@ -47,7 +47,7 @@ func main() {
 	// --- 初期テストユーザーの作成 ---
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("test1234"), bcrypt.DefaultCost)
 	testUserSQL := `INSERT INTO users (username, password_hash) SELECT $1, $2 WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = $1);`
-	db.Exec(testUserSQL, "admin", string(hashedPassword))
+	db.Exec(testUserSQL, "admin@test.com", string(hashedPassword))
 
 	// --- 外部（Next.js）からのアクセス許可設定 ---
 	c := cors.New(cors.Options{

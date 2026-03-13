@@ -1,17 +1,16 @@
-"use client";
+'use client';
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(""); // email用に使うならemailにリネームしてもOK
   const [password, setPassword] = useState("");
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // GoのAPIを叩く
     const res = await fetch("http://localhost:8080/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -27,25 +26,49 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <form onSubmit={handleLogin} className="p-8 bg-gray-100 rounded shadow-md">
-        <h1 className="mb-4 text-2xl font-bold">GoMemo Login</h1>
-        <input
-          type="text"
-          placeholder="ユーザー名"
-          className="w-full p-2 mb-4 border"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="パスワード"
-          className="w-full p-2 mb-4 border"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button className="w-full p-2 text-white bg-blue-500 rounded">ログイン</button>
-      </form>
+    <div className="min-h-screen bg-[#FDFCF0] flex items-center justify-center p-4 text-[#451A03]">
+      <div className="max-w-md w-full bg-white/50 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-orange-100">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold tracking-tight mb-2 text-[#D97706]">GoMemo</h1>
+        </div>
+
+        {/* 1. onSubmit を追加 */}
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium mb-2 ml-1">メールアドレス</label>
+            <input 
+              type="email" 
+              required
+              value={username} // 2. stateと紐付け
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full px-4 py-3 rounded-2xl border-none bg-orange-50/50 focus:ring-2 focus:ring-orange-200 outline-none transition-all"
+              placeholder="example@mail.com"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2 ml-1">パスワード</label>
+            <input 
+              type="password" 
+              required
+              value={password} // 3. stateと紐付け
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 rounded-2xl border-none bg-orange-50/50 focus:ring-2 focus:ring-orange-200 outline-none transition-all"
+              placeholder="••••••••"
+            />
+          </div>
+          
+          <button 
+            type="submit" // 4. typeをsubmitに
+            className="w-full bg-[#D97706] text-white py-3 rounded-2xl font-bold hover:bg-[#B45309] transition-colors shadow-md shadow-orange-200"
+          >
+            ログイン
+          </button>
+        </form>
+
+        <p className="mt-8 text-center text-sm text-orange-800/50">
+          アカウントをお持ちでないですか？ <span className="text-[#D97706] font-bold cursor-pointer">新規登録</span>
+        </p>
+      </div>
     </div>
   );
 }
