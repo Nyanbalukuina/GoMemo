@@ -1,0 +1,9 @@
+# 秘密情報の除外
+.env
+
+# 各ディレクトリの不要ファイルもついでに除外
+node_modules/
+.next/
+backend/tmp/
+backend/bin/
+pgdata/

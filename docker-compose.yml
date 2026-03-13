@@ -1,0 +1,55 @@
+services:
+  # データベース (PostgreSQL)
+  db:
+    image: postgres:16-alpine
+    container_name: gomemo-db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: gomemodb
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+
+  # 管理ツール (ブラウザでDBの中身が見れる)
+  adminer:
+    image: adminer
+    container_name: gomemo-adminer
+    restart: always
+    ports:
+      - "8081:8080"
+
+  backend:
+    build:
+      context: ./backend
+      args:
+        - http_proxy=${HTTP_PROXY:-}
+        - https_proxy=${HTTPS_PROXY:-}
+    container_name: gomemo-backend
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=db  # ここをコンテナ名に合わせることで接続可能
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        - http_proxy=${HTTP_PROXY:-}
+        - https_proxy=${HTTPS_PROXY:-}
+    container_name: gomemo-frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+    depends_on:
+      - backend
