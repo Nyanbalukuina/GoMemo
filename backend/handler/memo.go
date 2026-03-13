@@ -1,25 +1,44 @@
 package handler
 
 import (
-	"database/sql"
-	"fmt"
 	"net/http"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
-// メモ作成の処理
-func CreateMemo(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		content := r.URL.Query().Get("content")
-		if content == "" {
-			http.Error(w, "内容を入力してください", http.StatusBadRequest)
+// Memo 構造体
+type Memo struct {
+	ID        uint      `json:"id" gorm:"primaryKey"`
+	UserID    uint      `json:"user_id"`
+	FolderID  *uint     `json:"folder_id"` // nullを許容するためポインタ
+	Title     string    `json:"title"`
+	Content   string    `json:"content"`
+	IsPinned  bool      `json:"is_pinned" gorm:"default:false"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+func (Memo) TableName() string {
+	return "memos"
+}
+
+// CreateMemo メモ作成ハンドラー
+func CreateMemo(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var memo Memo
+		// JSONを構造体にバインド
+		if err := c.ShouldBindJSON(&memo); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		// DBへの保存処理（本来はここもさらに分けるのが理想ですが、まずはここでOK）
-		_, err := db.Exec("INSERT INTO memos (user_id, content) VALUES (1, $1)", content)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		// DBに保存
+		if err := db.Create(&memo).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "メモの作成に失敗しました"})
 			return
 		}
-		fmt.Fprintf(w, "メモ「%s」を保存しました", content)
+
+		c.JSON(http.StatusCreated, memo)
 	}
 }
