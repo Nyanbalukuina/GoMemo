@@ -17,11 +17,13 @@ func main() {
 	// 1. データベース接続設定 (GORM)
 	// 環境変数からホスト名を取得（Docker環境とローカル環境の両方に対応）
 	dbHost := os.Getenv("DB_HOST")
-	if dbHost == "" { dbHost = "localhost" }
-	
+	if dbHost == "" {
+		dbHost = "localhost"
+	}
+
 	// DB接続文字列の作成
 	dsn := fmt.Sprintf("host=%s user=user password=password dbname=gomemodb port=5432 sslmode=disable", dbHost)
-	
+
 	// DBへ接続開始
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -47,11 +49,11 @@ func main() {
 	// 5. CORS設定
 	// Next.js（localhost:3000）からのアクセスを許可する設定
 	r.Use(cors.New(cors.Config{
-    AllowOrigins:     []string{"http://localhost:3000"},
-    AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-    // Cookieをヘッダーでやり取りするため、以下を確認
-    AllowHeaders:     []string{"Content-Type", "Authorization", "Cookie"}, 
-    AllowCredentials: true,
+		AllowOrigins: []string{"http://localhost:3000"},
+		AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		// Cookieをヘッダーでやり取りするため、以下を確認
+		AllowHeaders:     []string{"Content-Type", "Authorization", "Cookie"},
+		AllowCredentials: true,
 	}))
 
 	// 6. ルーティング設定（APIエンドポイントの登録）
@@ -69,16 +71,17 @@ func main() {
 
 		// このグループに AuthMiddleware を適用
 		protected := api.Group("/")
-		protected.Use(handler.AuthMiddleware()) 
+		protected.Use(handler.AuthMiddleware())
 		{
 			protected.GET("/folders/get", handler.GetFolders(db))
 			protected.POST("/folders/create", handler.CreateFolder(db))
-			protected.DELETE("/folders/:id", handler.DeleteFolder(db))
+			protected.DELETE("/folders/delete/:id", handler.DeleteFolder(db))
+			protected.PUT("/folders/update/:id", handler.UpdateFolder(db))
 		}
 	}
 
 	// 7. サーバー起動
 	// ポート8080でリクエストの待ち受けを開始
 	fmt.Println("サーバー起動中... http://localhost:8080")
-	r.Run(":8080") 
+	r.Run(":8080")
 }

@@ -1,12 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import FolderItem from "./FolderItem";
-
-// APIから返ってくるフォルダの型定義
-interface Folder {
-  id: number;
-  name: string;
-}
+import { Folder } from "@/types/index";
 
 export default function FolderList() {
   // 後でAPIから取得する想定のダミー
@@ -49,7 +44,6 @@ export default function FolderList() {
 
   // e: React.MouseEvent を削除
   const handleDeleteFolder = async (id: number) => {
-    // e.stopPropagation(); もここから削除（子コンポーネント側でやるため）
     
     if (!confirm("このフォルダを削除しますか？")) return;
 
@@ -66,14 +60,31 @@ export default function FolderList() {
     }
   };
 
+  const handleUpdateFolder = async (id: number, currentName: string) => {
+    const newName = prompt("新しいフォルダ名を入力してください", currentName);
+    if (!newName || newName === currentName) return;
+
+    const res = await fetch(`http://localhost:8080/api/folders/update/${id}`, {
+      method: "PUT", // または PATCH
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newName }),
+      credentials: "include",
+    });
+
+    if (res.ok) {
+      fetchFolders();
+    } else {
+      alert("更新に失敗しました");
+    }
+  };
+
   useEffect(() => {
     fetchFolders();
   }, []);
 
   return (
     <nav className="flex-1 space-y-2">
-      {/* ラベル：落ち着いたオリーブ色で主張を抑える */}
-      <p className="text-[10px] font-bold text-olive-700/50 uppercase tracking-[0.2em] ml-3 mb-5">
+      <p className="text-[10px] font-bold text-olive-800/90  uppercase tracking-[0.2em] ml-3 mb-5">
         Folders
       </p>
       
@@ -86,7 +97,10 @@ export default function FolderList() {
             isActive={selectedId === folder.id}
             onClick={() => setSelectedId(folder.id)}
             onDelete={handleDeleteFolder}
-            onEdit={handleDeleteFolder}
+            onEdit={(id) => {
+              const currentName = folders.find(f => f.id === id)?.name;
+              handleUpdateFolder(id, currentName || "");
+            }}
           />
         ))}
       </div>
@@ -96,9 +110,11 @@ export default function FolderList() {
         onClick={handleCreateFolder}
         className="
           w-full mt-6 py-3 
-          border-2 border-dashed border-olive-200 
-          rounded-xl text-olive-700/60 
-          hover:text-olive-800 hover:border-olive-700/30 hover:bg-olive-200/30 
+          border-2 border-dashed border-olive-800/90 
+          rounded-xl text-olive-800/90 
+          
+          hover:text-olive-900 hover:border-olive-900/50 hover:bg-olive-300/40 
+          
           transition-all duration-200 text-xs font-bold
         "
       >

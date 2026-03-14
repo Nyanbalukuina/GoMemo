@@ -1,16 +1,17 @@
 'use client';
 
-import Sidebar from "@/components/dashboard/Sidebar";
+import Sidebar from "@/components/dashboard/sidebar/Sidebar";
+import MemoCard from "@/components/dashboard/memo/MemoCard";
 
 export default function DashboardPage() {
   // 後でGoから取得するデータのダミー
   const dummyMemos = [
-    { id: 1, title: "買い物リスト", content: "牛乳、たまご、パン...", pinned: true },
-    { id: 2, title: "アイデア", content: "Go言語で作るメモアプリの設計について", pinned: false },
-    { id: 3, title: "", content: "タイトルなしの短いメモ。ふと思いついたこと。", pinned: false },
-    { id: 4, title: "買い物リスト", content: "牛乳、たまご、パン...", pinned: true },
-    { id: 5, title: "アイデア", content: "Go言語で作るメモアプリの設計について", pinned: false },
-    { id: 6, title: "", content: "タイトルなしの短いメモ。ふと思いついたこと。", pinned: false },
+    { id: 1, title: "買い物リスト", content: "牛乳、たまご、パン...", pinned: true, updated_at: "2026-03-14" },
+    { id: 2, title: "アイデア", content: "Go言語で作るメモアプリの設計について", pinned: false, updated_at: "2026-03-14" },
+    { id: 3, title: "", content: "タイトルなしの短いメモ。ふと思いついたこと。", pinned: false, updated_at: "2026-03-14" },
+    { id: 4, title: "買い物リスト", content: "牛乳、たまご、パン...", pinned: true, updated_at: "2026-03-14" },
+    { id: 5, title: "アイデア", content: "Go言語で作るメモアプリの設計について", pinned: false, updated_at: "2026-03-14" },
+    { id: 6, title: "", content: "タイトルなしの短いメモ。ふと思いついたこと。", pinned: false, updated_at: "2026-03-14" },
   ];
 
   return (
@@ -28,11 +29,7 @@ export default function DashboardPage() {
         {/* メモグリッド */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {dummyMemos.map((memo) => (
-            <div key={memo.id} className="group p-6 rounded-3xl bg-white border border-orange-50 shadow-sm hover:shadow-md transition-all relative overflow-hidden">
-              {memo.pinned && <div className="absolute top-3 right-3 text-orange-400">📌</div>}
-              <h3 className="font-bold text-lg mb-2">{memo.title || "無題のメモ"}</h3>
-              <p className="text-orange-950/70 text-sm leading-relaxed line-clamp-4">{memo.content}</p>
-            </div>
+            <MemoCard key={memo.id} {...memo} />
           ))}
         </div>
       </main>
