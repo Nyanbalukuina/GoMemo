@@ -73,10 +73,16 @@ func main() {
 		protected := api.Group("/")
 		protected.Use(handler.AuthMiddleware())
 		{
+			// メモ関連のエンドポイント
+			protected.GET("/memos/get", handler.GetMemos(db))
+			protected.POST("/memos/create", handler.CreateMemo(db))
+			protected.PUT("/memos/update/:id", handler.UpdateMemo(db))
+			protected.DELETE("/memos/delete/:id", handler.DeleteMemo(db))
+			// フォルダ関連のエンドポイント
 			protected.GET("/folders/get", handler.GetFolders(db))
 			protected.POST("/folders/create", handler.CreateFolder(db))
-			protected.DELETE("/folders/delete/:id", handler.DeleteFolder(db))
 			protected.PUT("/folders/update/:id", handler.UpdateFolder(db))
+			protected.DELETE("/folders/delete/:id", handler.DeleteFolder(db))
 		}
 	}
 

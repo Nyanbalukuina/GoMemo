@@ -26,34 +26,39 @@ func (Folder) TableName() string {
 func CreateFolder(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var folder Folder
-		c.ShouldBindJSON(&folder)
+		if err := c.ShouldBindJSON(&folder); err != nil {
+			c.JSON(400, gin.H{"error": "Invalid JSON"})
+			return
+		}
 
-		// ログ：フロントから何が届いているか
-		fmt.Printf("DEBUG: Received Folder Name: %s\n", folder.Name)
+		// ここを "userID" に修正
+		val, exists := c.Get("userID")
 
-		val, exists := c.Get("user_id")
-		fmt.Printf("DEBUG: UserID exists: %v, Value: %v\n", exists, val)
+		if !exists {
+			fmt.Println("DEBUG: userID not found in context")
+			c.JSON(401, gin.H{"error": "Unauthorized"})
+			return
+		}
 
+		// 型アサーション
 		if userID, ok := val.(uint); ok {
 			folder.UserID = userID
-		} else if userIDFloat, ok := val.(float64); ok {
-			folder.UserID = uint(userIDFloat)
 		}
 
-		fmt.Printf("DEBUG: Final folder.UserID: %d\n", folder.UserID)
-
-		err := db.Create(&folder).Error
-		if err != nil {
-			fmt.Printf("DEBUG: DB Error: %v\n", err) // ここでDBエラーがわかる
+		if err := db.Create(&folder).Error; err != nil {
+			c.JSON(500, gin.H{"error": "Failed to create folder"})
+			return
 		}
+
+		c.JSON(200, folder)
 	}
 }
 
 // GetFolders ログイン中のユーザーのフォルダ一覧を取得
 func GetFolders(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// ミドルウェアがセットした user_id を取得
-		userID, exists := c.Get("user_id")
+		// ミドルウェアがセットした userID を取得
+		userID, exists := c.Get("userID")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "ユーザー情報が見つかりません"})
 			return
@@ -74,7 +79,7 @@ func GetFolders(db *gorm.DB) gin.HandlerFunc {
 func DeleteFolder(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
-		userID, _ := c.Get("user_id")
+		userID, _ := c.Get("userID")
 
 		// 実行：userIDが一致する場合のみ物理削除
 		if err := db.Unscoped().Where("id = ? AND user_id = ?", id, userID).Delete(&Folder{}).Error; err != nil {
@@ -89,7 +94,7 @@ func DeleteFolder(db *gorm.DB) gin.HandlerFunc {
 func UpdateFolder(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
-		userID, _ := c.Get("user_id")
+		userID, _ := c.Get("userID")
 
 		var folder Folder
 		if err := c.ShouldBindJSON(&folder); err != nil {

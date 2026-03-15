@@ -1,37 +1,133 @@
 'use client';
 
+import { useEffect, useState } from "react";
 import Sidebar from "@/components/dashboard/sidebar/Sidebar";
 import MemoCard from "@/components/dashboard/memo/MemoCard";
+import { Memo } from "@/types/index";
+import MemoModal from "@/components/dashboard/memo/MemoModal";
 
 export default function DashboardPage() {
+  const [memos, setMemos] = useState<Memo[]>([]);
+  // モーダル管理用のState
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedMemo, setSelectedMemo] = useState<Memo | null>(null);
+
   // 後でGoから取得するデータのダミー
-  const dummyMemos = [
-    { id: 1, title: "買い物リスト", content: "牛乳、たまご、パン...", pinned: true, updated_at: "2026-03-14" },
-    { id: 2, title: "アイデア", content: "Go言語で作るメモアプリの設計について", pinned: false, updated_at: "2026-03-14" },
-    { id: 3, title: "", content: "タイトルなしの短いメモ。ふと思いついたこと。", pinned: false, updated_at: "2026-03-14" },
-    { id: 4, title: "買い物リスト", content: "牛乳、たまご、パン...", pinned: true, updated_at: "2026-03-14" },
-    { id: 5, title: "アイデア", content: "Go言語で作るメモアプリの設計について", pinned: false, updated_at: "2026-03-14" },
-    { id: 6, title: "", content: "タイトルなしの短いメモ。ふと思いついたこと。", pinned: false, updated_at: "2026-03-14" },
-  ];
+  const fetchMemos = async () => {
+    try {
+      const res = await fetch("http://localhost:8080/api/memos/get", {
+        credentials: "include", // クッキー（トークン）を送信
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMemos(data);
+      }
+    } catch (err) {
+      console.error("メモ取得失敗:", err);
+    }
+  };
+
+  // 保存処理（作成・編集共通）
+  const handleSave = async (data: { title: string; content: string }) => {
+    const isEdit = !!selectedMemo;
+    const url = isEdit 
+      ? `http://localhost:8080/api/memos/update/${selectedMemo.id}` 
+      : "http://localhost:8080/api/memos/create";
+    
+    const method = isEdit ? "PUT" : "POST";
+
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      credentials: "include",
+    });
+
+    console.log("Request URL:", url);
+    console.log("Request Method:", method);
+    console.log("Payload:", data);
+
+    if (res.ok) {
+      setIsModalOpen(false);
+      fetchMemos(); // 一覧更新
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("このメモを削除しますか？")) return;
+    console.log("Click delete for memo ID:", id);
+
+    const res = await fetch(`http://localhost:8080/api/memos/delete/${id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+
+    if (res.ok) {
+      if (selectedMemo?.id === id) setSelectedMemo(null); // 選択中のメモならリセット
+      fetchMemos();
+    } else {
+      alert("削除に失敗しました");
+    }
+  };
+
+  useEffect(() => {
+    fetchMemos();
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-[#FDFCF0] text-[#451A03]">
       <Sidebar />
       
       <main className="flex-1 p-8 md:p-12 overflow-y-auto">
-        <header className="flex justify-between items-center mb-10">
-          <h1 className="text-2xl font-bold">マイメモ一覧</h1>
-          <button className="bg-[#D97706] text-white px-6 py-3 rounded-2xl font-bold shadow-md shadow-orange-200 hover:bg-[#B45309] transition-all flex items-center gap-2">
-            <span className="text-xl">+</span> メモを書く
+        <header className="flex justify-between items-end mb-12">
+          <div className="flex flex-col gap-1">
+            {/* タイトルを少し太く、字間を詰めて今どきに */}
+            <h1 className="text-3xl font-black text-olive-950 tracking-tighter">
+              My Memos
+            </h1>
+            {/* 現在の状況を補足する小さなテキストを追加するとプロっぽい */}
+            <p className="text-xs font-medium text-olive-700/60 uppercase tracking-widest ml-0.5">
+              All thoughts in one place
+            </p>
+          </div>
+
+          <button 
+            onClick={() => { setSelectedMemo(null); setIsModalOpen(true); }}
+            className="
+              group relative flex items-center gap-2 px-6 py-3
+              bg-olive-800 text-olive-50 rounded-2xl
+              font-bold text-sm shadow-lg shadow-olive-200/50
+              hover:bg-olive-900 hover:-translate-y-0.5
+              active:translate-y-0
+              transition-all duration-200
+            "
+          >
+            {/* アイコンに少し動きをつける */}
+            <span className="text-lg transition-transform group-hover:rotate-90">+</span>
+            <span>メモを書く</span>
+            
+            {/* 隠し要素：ボタンの下に薄い光沢を入れる */}
+            <div className="absolute inset-0 rounded-2xl bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
           </button>
         </header>
 
         {/* メモグリッド */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {dummyMemos.map((memo) => (
-            <MemoCard key={memo.id} {...memo} />
+          {memos.map((memo) => (
+            <div key={memo.id} onClick={() => { setSelectedMemo(memo); setIsModalOpen(true); }}>
+              <MemoCard key={memo.id} memo={memo} onDelete={handleDelete} />
+            </div>
           ))}
         </div>
+
+        {/* 共通モーダル */}
+        <MemoModal 
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleSave}
+          initialData={selectedMemo ?? undefined}
+          title={selectedMemo ? "メモを編集" : "新しいメモ"}
+        />
       </main>
     </div>
   );

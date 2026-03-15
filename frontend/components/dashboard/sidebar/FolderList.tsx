@@ -83,17 +83,45 @@ export default function FolderList() {
   }, []);
 
   return (
-    <nav className="flex-1 space-y-2">
-      <p className="text-[10px] font-bold text-olive-800/90  uppercase tracking-[0.2em] ml-3 mb-5">
-        Folders
-      </p>
-      
-      <div className="space-y-1">
+    <nav className="flex-1 flex flex-col min-h-0 px-2">
+      {/* ラベルと点線ボタンを横並びに配置 */}
+      <div className="flex items-center justify-between px-3 mb-6 flex-shrink-0">
+        <p className="text-[10px] font-bold text-olive-800/90 uppercase tracking-[0.2em]">
+          Folders
+        </p>
+        
+        <button 
+          onClick={handleCreateFolder}
+          className="
+            group relative
+            w-8 h-8
+            /* 初期状態：FolderItemの非アクティブ時に合わせる */
+            bg-olive-50 text-olive-900 
+            border-2 border-olive-800/20 
+            rounded-full
+            
+            /* ホバー：枠線を太く見せ、少し右に動かす */
+            hover:border-olive-800 hover:bg-white
+            
+            active:translate-x-0
+            transition-all duration-200
+            flex items-center justify-center
+          "
+          title="新規フォルダ"
+        >
+          {/* お好みの回転アニメーション */}
+          <span className="text-xl font-bold transition-transform duration-300 group-hover:rotate-90">
+            +
+          </span>
+        </button>
+      </div>
+
+      {/* フォルダ一覧 */}
+      <div className="flex-1 crollbar-hide space-y-1">
         {folders.map((folder) => (
           <FolderItem
             key={folder.id}
-            id={folder.id}
-            name={folder.name}
+            {...folder}
             isActive={selectedId === folder.id}
             onClick={() => setSelectedId(folder.id)}
             onDelete={handleDeleteFolder}
@@ -104,22 +132,6 @@ export default function FolderList() {
           />
         ))}
       </div>
-
-      {/* 作成ボタン：背景より少しだけ濃い色で、マットな質感を出す */}
-      <button 
-        onClick={handleCreateFolder}
-        className="
-          w-full mt-6 py-3 
-          border-2 border-dashed border-olive-800/90 
-          rounded-xl text-olive-800/90 
-          
-          hover:text-olive-900 hover:border-olive-900/50 hover:bg-olive-300/40 
-          
-          transition-all duration-200 text-xs font-bold
-        "
-      >
-        + NEW FOLDER
-      </button>
     </nav>
   );
 }
