@@ -10,13 +10,19 @@ export default function MemoCard({ memo, onDelete }: MemoCardProps) {
   const { id, title, content, pinned, updated_at } = memo;
 
   return (
-    <div className="
-      group relative p-7 rounded-[2rem] bg-white 
-      border-2 border-olive-800/10 
-      shadow-sm shadow-olive-100/50
-      hover:border-olive-800 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-olive-200/40
-      transition-all duration-300 ease-out overflow-hidden cursor-pointer
-    ">
+    <div
+      draggable // ドラッグ可能にする
+      onDragStart={(e) => {
+        e.dataTransfer.setData("memoId", memo.id.toString()); // IDを記録
+      }} 
+      className="
+        group relative p-7 rounded-[2rem] bg-white 
+        border-2 border-olive-800/10 
+        shadow-sm shadow-olive-100/50
+        hover:border-olive-800 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-olive-200/40
+        transition-all duration-300 ease-out overflow-hidden cursor-pointer
+      "
+    >
       {/* 削除ボタン：ホバー時のみ表示 */}
       <button
         onClick={(e) => {

@@ -3,10 +3,15 @@ import { useEffect, useState } from "react";
 import FolderItem from "./FolderItem";
 import { Folder } from "@/types/index";
 
-export default function FolderList() {
+interface FolderListProps {
+  onSelectFolder: (id: number | null) => void;
+  selectedFolderId: number | null;
+  onRefresh: () => void;
+}
+
+export default function FolderList({ onSelectFolder, selectedFolderId, onRefresh }: FolderListProps) {
   // 後でAPIから取得する想定のダミー
   const [folders, setFolders] = useState<Folder[]>([]);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
 
   // 1. フォルダ一覧を取得する関数
   const fetchFolders = async () => {
@@ -42,9 +47,7 @@ export default function FolderList() {
     }
   };
 
-  // e: React.MouseEvent を削除
   const handleDeleteFolder = async (id: number) => {
-    
     if (!confirm("このフォルダを削除しますか？")) return;
 
     const res = await fetch(`http://localhost:8080/api/folders/delete/${id}`, {
@@ -53,7 +56,10 @@ export default function FolderList() {
     });
 
     if (res.ok) {
-      if (selectedId === id) setSelectedId(null); // 選択中のフォルダならリセット
+      // ✅ 削除したフォルダが今選択中（selectedFolderId）なら、親の状態を null に戻す
+      if (selectedFolderId === id) {
+        onSelectFolder(null);
+      }
       fetchFolders();
     } else {
       alert("削除に失敗しました");
@@ -117,13 +123,37 @@ export default function FolderList() {
       </div>
 
       {/* フォルダ一覧 */}
-      <div className="flex-1 crollbar-hide space-y-1">
+      <div className="flex-1 scrollbar-hide space-y-1">
+        {/* 「すべてのメモ」ボタンもここにあると便利です */}
+        <button
+          onClick={() => onSelectFolder(null)}
+          className={`
+            group flex items-center px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 mb-4
+            border-2 w-full
+            ${selectedFolderId === null 
+              ? "bg-olive-700 text-olive-50 border-olive-800 shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]" 
+              : "bg-olive-50 text-olive-900 border-olive-800/20 hover:border-olive-800 hover:bg-white hover:translate-x-1"}
+          `}
+        >
+          <div className="flex items-center gap-3">
+            {/* FolderItemのドットと共通のデザイン */}
+            <div className={`
+              w-2 h-2 rounded-full border
+              ${selectedFolderId === null ? "bg-olive-50 border-olive-900" : "bg-olive-700 border-transparent"}
+            `} />
+            <span className="text-sm font-bold">
+              すべてのメモ
+            </span>
+          </div>
+        </button>
+
         {folders.map((folder) => (
           <FolderItem
             key={folder.id}
             {...folder}
-            isActive={selectedId === folder.id}
-            onClick={() => setSelectedId(folder.id)}
+            onRefresh={onRefresh}
+            isActive={selectedFolderId === folder.id}
+            onClick={() => onSelectFolder(folder.id)}
             onDelete={handleDeleteFolder}
             onEdit={(id) => {
               const currentName = folders.find(f => f.id === id)?.name;

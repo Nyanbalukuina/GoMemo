@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { Trash2, Pencil } from "lucide-react";
 
 interface FolderItemProps {
@@ -8,12 +9,38 @@ interface FolderItemProps {
   onClick: () => void;
   onDelete: (id: number) => void;
   onEdit: (id: number) => void; 
+  onRefresh: () => void;
 }
 
-export default function FolderItem({ id, name, isActive, onClick, onDelete, onEdit }: FolderItemProps) {
+export default function FolderItem({ id, name, isActive, onClick, onDelete, onEdit, onRefresh }: FolderItemProps) {
+  const [isOver, setIsOver] = useState(false);
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsOver(false);
+    const memoId = e.dataTransfer.getData("memoId");
+    
+    // ここでさっき作ったAPIを叩く
+    const res =await fetch(`http://localhost:8080/api/memos/update_folder/${memoId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ folder_id: id }),
+      credentials: "include"
+    });
+    
+    if (res.ok) {
+      onRefresh(); // 👈 ここで親の fetchMemos() が実行される！
+    }
+  };
+
   return (
     <div 
       onClick={onClick}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setIsOver(true);
+      }}
+      onDragLeave={() => setIsOver(false)}
+      onDrop={handleDrop}
       className={`
         group flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all duration-200
         /* 境界線を太く(border-2)し、背景とのコントラストを強化 */

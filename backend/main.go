@@ -50,7 +50,7 @@ func main() {
 	// Next.js（localhost:3000）からのアクセスを許可する設定
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{"http://localhost:3000"},
-		AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
 		// Cookieをヘッダーでやり取りするため、以下を確認
 		AllowHeaders:     []string{"Content-Type", "Authorization", "Cookie"},
 		AllowCredentials: true,
@@ -78,6 +78,7 @@ func main() {
 			protected.POST("/memos/create", handler.CreateMemo(db))
 			protected.PUT("/memos/update/:id", handler.UpdateMemo(db))
 			protected.DELETE("/memos/delete/:id", handler.DeleteMemo(db))
+			protected.PATCH("/memos/update_folder/:id", handler.UpdateMemoFolder(db))
 			// フォルダ関連のエンドポイント
 			protected.GET("/folders/get", handler.GetFolders(db))
 			protected.POST("/folders/create", handler.CreateFolder(db))

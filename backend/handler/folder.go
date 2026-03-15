@@ -66,7 +66,7 @@ func GetFolders(db *gorm.DB) gin.HandlerFunc {
 
 		var folders []Folder
 		// そのユーザーのIDに紐づくフォルダだけを検索
-		if err := db.Where("user_id = ?", userID).Find(&folders).Error; err != nil {
+		if err := db.Where("user_id = ?", userID).Order("id DESC").Find(&folders).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "フォルダの取得に失敗しました"})
 			return
 		}

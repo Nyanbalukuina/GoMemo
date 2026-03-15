@@ -1,7 +1,13 @@
 import Image from "next/image";
 import FolderList from "./FolderList";
 
-export default function Sidebar() {
+interface SidebarProps {
+  onSelectFolder: (id: number | null) => void;
+  onRefresh: () => void;
+  selectedFolderId: number | null;
+}
+
+export default function Sidebar({ onSelectFolder, selectedFolderId, onRefresh }: SidebarProps) {
   return (
     // bg-olive-100 (#d4dbd1) をベースに使用
     <aside className="w-64 bg-olive-100 border-r border-olive-200 p-6 flex flex-col h-screen sticky top-0 transition-colors">
@@ -14,7 +20,11 @@ export default function Sidebar() {
         </span>
       </div>
 
-      <FolderList />
+      <FolderList 
+        onSelectFolder={onSelectFolder} 
+        selectedFolderId={selectedFolderId} 
+        onRefresh={onRefresh}
+      />
 
       {/* フッター */}
       <div className="mt-auto pt-6 border-t border-olive-200 text-sm">

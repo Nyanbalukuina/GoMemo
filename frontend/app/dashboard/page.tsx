@@ -11,8 +11,14 @@ export default function DashboardPage() {
   // モーダル管理用のState
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMemo, setSelectedMemo] = useState<Memo | null>(null);
+  // フィルタリング用
+  const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
 
-  // 後でGoから取得するデータのダミー
+  const displayedMemos = memos.filter((memo) => {
+    if (selectedFolderId === null) return true; // 「すべてのメモ」なら全部表示
+    return memo.folder_id === selectedFolderId;  // 選択中のフォルダIDと一致するものだけ表示
+  });
+
   const fetchMemos = async () => {
     try {
       const res = await fetch("http://localhost:8080/api/memos/get", {
@@ -36,16 +42,17 @@ export default function DashboardPage() {
     
     const method = isEdit ? "PUT" : "POST";
 
+    const payload = {
+      ...data,
+      folder_id: selectedFolderId
+    };
+
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
       credentials: "include",
     });
-
-    console.log("Request URL:", url);
-    console.log("Request Method:", method);
-    console.log("Payload:", data);
 
     if (res.ok) {
       setIsModalOpen(false);
@@ -76,7 +83,11 @@ export default function DashboardPage() {
 
   return (
     <div className="flex min-h-screen bg-[#FDFCF0] text-[#451A03]">
-      <Sidebar />
+      <Sidebar 
+        onSelectFolder={setSelectedFolderId} 
+        selectedFolderId={selectedFolderId} 
+        onRefresh={fetchMemos}
+      />
       
       <main className="flex-1 p-8 md:p-12 overflow-y-auto">
         <header className="flex justify-between items-end mb-12">
@@ -113,10 +124,12 @@ export default function DashboardPage() {
 
         {/* メモグリッド */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {memos.map((memo) => (
-            <div key={memo.id} onClick={() => { setSelectedMemo(memo); setIsModalOpen(true); }}>
-              <MemoCard key={memo.id} memo={memo} onDelete={handleDelete} />
-            </div>
+          {displayedMemos.map((memo) => (
+            <MemoCard 
+              key={memo.id} 
+              memo={memo} 
+              onDelete={handleDelete} 
+            />
           ))}
         </div>
 

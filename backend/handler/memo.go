@@ -105,11 +105,37 @@ func GetMemos(db *gorm.DB) gin.HandlerFunc {
 		userID := c.GetUint("userID") // 認証ミドルウェアでセットされたユーザーIDを取得
 
 		// DBからユーザーのメモを取得
-		if err := db.Where("user_id = ?", userID).Find(&memos).Error; err != nil {
+		if err := db.Where("user_id = ?", userID).Order("id ASC").Find(&memos).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "メモの取得に失敗しました"})
 			return
 		}
 
 		c.JSON(http.StatusOK, memos)
+	}
+}
+
+func UpdateMemoFolder(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		memoID := c.Param("id")
+		userID, _ := c.Get("userID")
+
+		var input struct {
+			FolderID *uint `json:"folder_id"`
+		}
+		if err := c.ShouldBindJSON(&input); err != nil {
+			c.JSON(400, gin.H{"error": "Invalid input"})
+			return
+		}
+
+		// 自分のメモであることを確認しつつ、folder_idだけ更新
+		err := db.Model(&Memo{}).
+			Where("id = ? AND user_id = ?", memoID, userID).
+			Update("folder_id", input.FolderID).Error
+
+		if err != nil {
+			c.JSON(500, gin.H{"error": "Failed to move memo"})
+			return
+		}
+		c.JSON(200, gin.H{"message": "Moved successfully"})
 	}
 }
