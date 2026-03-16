@@ -16,14 +16,17 @@ import (
 func main() {
 	// 1. データベース接続設定 (GORM)
 	// 環境変数からホスト名を取得（Docker環境とローカル環境の両方に対応）
+	dbUser := os.Getenv("POSTGRES_USER")
+	dbPass := os.Getenv("POSTGRES_PASSWORD")
+	dbName := os.Getenv("POSTGRES_DB")
 	dbHost := os.Getenv("DB_HOST")
 	if dbHost == "" {
 		dbHost = "localhost"
 	}
 
 	// DB接続文字列の作成
-	dsn := fmt.Sprintf("host=%s user=user password=password dbname=gomemodb port=5432 sslmode=disable", dbHost)
-
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=5432 sslmode=disable", 
+		dbHost, dbUser, dbPass, dbName)
 	// DBへ接続開始
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {

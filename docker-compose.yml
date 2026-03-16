@@ -4,9 +4,9 @@ services:
     image: postgres:16-alpine
     container_name: gomemo-db
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: gomemodb
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
@@ -32,7 +32,10 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - DB_HOST=db  # ここをコンテナ名に合わせることで接続可能
+      - DB_HOST=${DB_HOST:-db}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     depends_on:
       - db
 
@@ -42,6 +45,7 @@ services:
       args:
         - http_proxy=${HTTP_PROXY:-}
         - https_proxy=${HTTPS_PROXY:-}
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
     container_name: gomemo-frontend
     volumes:
       - ./frontend:/app
@@ -50,6 +54,6 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
     depends_on:
       - backend
