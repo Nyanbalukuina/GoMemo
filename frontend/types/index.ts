@@ -2,8 +2,8 @@ export interface Memo {
   id: number;
   title: string;
   content: string;
-  pinned: boolean;
-  folder_id?: number; // 将来的にフォルダ分けする場合
+  is_pinned: boolean;
+  folder_id?: number;
   updated_at: string;
 }
 

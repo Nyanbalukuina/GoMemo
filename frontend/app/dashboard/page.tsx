@@ -14,10 +14,19 @@ export default function DashboardPage() {
   // フィルタリング用
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
 
-  const displayedMemos = memos.filter((memo) => {
-    if (selectedFolderId === null) return true; // 「すべてのメモ」なら全部表示
-    return memo.folder_id === selectedFolderId;  // 選択中のフォルダIDと一致するものだけ表示
-  });
+  const displayedMemos = memos
+    .filter((memo) => {
+      if (selectedFolderId === null) return true;
+      return memo.folder_id === selectedFolderId;
+    })
+    .sort((a, b) => {
+      // ピン留めされているものを上に持ってくる
+      if (a.is_pinned !== b.is_pinned) {
+        return a.is_pinned ? -1 : 1;
+      }
+      // 同じピン留め状態なら、ID（または作成日）が新しい順に並べる
+      return b.id - a.id;
+    });
 
   const fetchMemos = async () => {
     try {
@@ -62,7 +71,6 @@ export default function DashboardPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("このメモを削除しますか？")) return;
-    console.log("Click delete for memo ID:", id);
 
     const res = await fetch(`http://localhost:8080/api/memos/delete/${id}`, {
       method: "DELETE",
@@ -76,6 +84,23 @@ export default function DashboardPage() {
       alert("削除に失敗しました");
     }
   };
+
+  const handleTogglePin = async (id: number, is_pinned: boolean) => {
+  try {
+    const res = await fetch(`http://localhost:8080/api/memos/update/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_pinned: is_pinned }), // is_pinned のみ更新
+      credentials: "include",
+    });
+
+    if (res.ok) {
+      fetchMemos();
+    }
+  } catch (err) {
+    console.error("ピン留め更新失敗:", err);
+  }
+};
 
   useEffect(() => {
     fetchMemos();
@@ -129,6 +154,11 @@ export default function DashboardPage() {
               key={memo.id} 
               memo={memo} 
               onDelete={handleDelete} 
+              onEdit={(m) => {
+                setSelectedMemo(m); // 1. 編集するメモを保持
+                setIsModalOpen(true); // 2. モーダルを開く
+              }}
+              onTogglePin={handleTogglePin}
             />
           ))}
         </div>

@@ -48,27 +48,30 @@ func CreateMemo(db *gorm.DB) gin.HandlerFunc {
 }
 
 func UpdateMemo(db *gorm.DB) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var memo Memo
-		id := c.Param("id")
+    return func(c *gin.Context) {
+        id := c.Param("id")
+        userID := c.GetUint("userID")
 
-		// JSONを構造体にバインド
-		if err := c.ShouldBindJSON(&memo); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
+        // 1. マップで入力を受け取る（これが重要！）
+        var input map[string]interface{}
+        if err := c.ShouldBindJSON(&input); err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+            return
+        }
 
-		userID := c.GetUint("userID")
-		memo.UserID = userID
+        // 2. 更新実行
+        // マップを使うことで、GORMは "pinned": false を無視せずにSQLへ含めます
+        result := db.Model(&Memo{}).
+            Where("id = ? AND user_id = ?", id, userID).
+            Updates(input)
 
-		// DBの既存レコードを更新
-		if err := db.Model(&Memo{}).Where("id = ?", id).Updates(memo).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "メモの更新に失敗しました"})
-			return
-		}
+        if result.Error != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "DB更新失敗"})
+            return
+        }
 
-		c.JSON(http.StatusOK, memo)
-	}
+        c.JSON(http.StatusOK, gin.H{"status": "success"})
+    }
 }
 
 // handler/memo.go
