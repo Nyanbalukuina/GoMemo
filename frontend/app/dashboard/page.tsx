@@ -5,115 +5,55 @@ import Sidebar from "@/components/dashboard/sidebar/Sidebar";
 import MemoCard from "@/components/dashboard/memo/MemoCard";
 import { Memo } from "@/types/index";
 import MemoModal from "@/components/dashboard/memo/MemoModal";
+import { useMemos } from "@/hooks/useMemos";
 
 export default function DashboardPage() {
-  const [memos, setMemos] = useState<Memo[]>([]);
-  // モーダル管理用のState
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedMemo, setSelectedMemo] = useState<Memo | null>(null);
-  // フィルタリング用
+  // 【UI層の状態】ユーザーが今どのフォルダを選択しているか
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
 
-  const displayedMemos = memos
-    .filter((memo) => {
-      if (selectedFolderId === null) return true;
-      return memo.folder_id === selectedFolderId;
-    })
-    .sort((a, b) => {
-      // ピン留めされているものを上に持ってくる
-      if (a.is_pinned !== b.is_pinned) {
-        return a.is_pinned ? -1 : 1;
-      }
-      // 同じピン留め状態なら、ID（または作成日）が新しい順に並べる
-      return b.id - a.id;
-    });
+  // 【データ層から取得】裏側の複雑な通信ロジックはフックに任せ、表示に必要なデータと関数だけ受け取る
+  const { displayedMemos, fetchMemos, saveMemo, deleteMemo, togglePin } = useMemos(selectedFolderId);
 
-  const fetchMemos = async () => {
-    try {
-      const res = await fetch("http://localhost:8080/api/memos/get", {
-        credentials: "include", // クッキー（トークン）を送信
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setMemos(data);
-      }
-    } catch (err) {
-      console.error("メモ取得失敗:", err);
-    }
-  };
+  // 【UI層の状態】モーダルが開いているか、今どのメモを編集モードで開いているか
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedMemo, setSelectedMemo] = useState<Memo | null>(null);
 
-  // 保存処理（作成・編集共通）
+  useEffect(() => {
+    fetchMemos();
+  }, [fetchMemos]);
+
+  // 【UIとデータの橋渡し】保存ボタンが押されたらデータを保存し、成功時のみモーダルを閉じる
   const handleSave = async (data: { title: string; content: string }) => {
-    const isEdit = !!selectedMemo;
-    const url = isEdit 
-      ? `http://localhost:8080/api/memos/update/${selectedMemo.id}` 
-      : "http://localhost:8080/api/memos/create";
-    
-    const method = isEdit ? "PUT" : "POST";
-
-    const payload = {
+    const success = await saveMemo({
       ...data,
       folder_id: selectedFolderId
-    };
+    }, selectedMemo?.id);
 
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      credentials: "include",
-    });
-
-    if (res.ok) {
+    if (success) {
       setIsModalOpen(false);
-      fetchMemos(); // 一覧更新
     }
   };
 
+  // 【UIとデータの橋渡し】削除が成功＆削除したのが編集中のメモなら、選択状態もリセットする
   const handleDelete = async (id: number) => {
-    if (!confirm("このメモを削除しますか？")) return;
-
-    const res = await fetch(`http://localhost:8080/api/memos/delete/${id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-
-    if (res.ok) {
-      if (selectedMemo?.id === id) setSelectedMemo(null); // 選択中のメモならリセット
-      fetchMemos();
-    } else {
-      alert("削除に失敗しました");
+    const success = await deleteMemo(id);
+    if (success && selectedMemo?.id === id) {
+      setSelectedMemo(null); // 選択中のメモならリセット
     }
   };
 
   const handleTogglePin = async (id: number, is_pinned: boolean) => {
-  try {
-    const res = await fetch(`http://localhost:8080/api/memos/update/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ is_pinned: is_pinned }), // is_pinned のみ更新
-      credentials: "include",
-    });
-
-    if (res.ok) {
-      fetchMemos();
-    }
-  } catch (err) {
-    console.error("ピン留め更新失敗:", err);
-  }
-};
-
-  useEffect(() => {
-    fetchMemos();
-  }, []);
+    await togglePin(id, is_pinned);
+  };
 
   return (
     <div className="flex min-h-screen bg-[#FDFCF0] text-[#451A03]">
-      <Sidebar 
-        onSelectFolder={setSelectedFolderId} 
-        selectedFolderId={selectedFolderId} 
+      <Sidebar
+        onSelectFolder={setSelectedFolderId}
+        selectedFolderId={selectedFolderId}
         onRefresh={fetchMemos}
       />
-      
+
       <main className="flex-1 p-8 md:p-12 overflow-y-auto">
         <header className="flex justify-between items-end mb-12">
           <div className="flex flex-col gap-1">
@@ -127,7 +67,7 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <button 
+          <button
             onClick={() => { setSelectedMemo(null); setIsModalOpen(true); }}
             className="
               group relative flex items-center gap-2 px-6 py-3
@@ -141,7 +81,7 @@ export default function DashboardPage() {
             {/* アイコンに少し動きをつける */}
             <span className="text-lg transition-transform group-hover:rotate-90">+</span>
             <span>メモを書く</span>
-            
+
             {/* 隠し要素：ボタンの下に薄い光沢を入れる */}
             <div className="absolute inset-0 rounded-2xl bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
           </button>
@@ -150,10 +90,10 @@ export default function DashboardPage() {
         {/* メモグリッド */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {displayedMemos.map((memo) => (
-            <MemoCard 
-              key={memo.id} 
-              memo={memo} 
-              onDelete={handleDelete} 
+            <MemoCard
+              key={memo.id}
+              memo={memo}
+              onDelete={handleDelete}
               onEdit={(m) => {
                 setSelectedMemo(m); // 1. 編集するメモを保持
                 setIsModalOpen(true); // 2. モーダルを開く
@@ -164,7 +104,7 @@ export default function DashboardPage() {
         </div>
 
         {/* 共通モーダル */}
-        <MemoModal 
+        <MemoModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleSave}

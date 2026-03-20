@@ -23,7 +23,15 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
-var JwtKey = []byte("your_secret_key")
+var JwtKey []byte
+
+func init() {
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		secret = "fallback_secret_for_local_dev"
+	}
+	JwtKey = []byte(secret)
+}
 
 func Login(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {

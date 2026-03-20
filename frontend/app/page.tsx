@@ -11,7 +11,7 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch("http://localhost:8080/api/login", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
@@ -35,10 +35,10 @@ export default function LoginPage() {
         <div className="flex flex-col items-center mb-10">
           <div className="flex items-center gap-4">
             <div className="bg-olive-700 p-2 rounded-xl">
-              <Image 
-                src="/logo.png" 
-                alt="GoMemo Logo" 
-                width={32} 
+              <Image
+                src="/logo.png"
+                alt="GoMemo Logo"
+                width={32}
                 height={32}
                 className="brightness-110"
               />
@@ -50,8 +50,8 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
             <label className="block text-xs font-bold uppercase tracking-widest mb-2 ml-1 text-olive-700/70">メールアドレス</label>
-            <input 
-              type="email" 
+            <input
+              type="email"
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -61,8 +61,8 @@ export default function LoginPage() {
           </div>
           <div>
             <label className="block text-xs font-bold uppercase tracking-widest mb-2 ml-1 text-olive-700/70">パスワード</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -70,8 +70,8 @@ export default function LoginPage() {
               placeholder="••••••••"
             />
           </div>
-          
-          <button 
+
+          <button
             type="submit"
             className="w-full bg-olive-700 text-olive-50 py-4 rounded-2xl font-bold hover:bg-olive-800 transition-all active:scale-[0.98] border-b-4 border-olive-900"
           >
